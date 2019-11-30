@@ -1,3 +1,4 @@
+import datetime
 class Flight:
     def __init__(self, flight_type = '', airline = '', sequence_number = 0, flight_number = '', airplane_type = '', unit_loss = 0, estimated_time = 0, actual_time = 0, runway = -1, delay_losses = -1 ):
         """Intialization of flight
@@ -24,12 +25,32 @@ class Flight:
         self.actual_time = actual_time
         self.runway = runway
         self.delay_losses = delay_losses
+        self.delay_time = 0
+    
+    def get_type(self):
+        return(self.flight_type)
 
+    def get_runway(self):
+        return(self.runway)
 
-def init_flights(app_num, dep_num):
-    flights = []
-    for i in range(app_num):
-        flights.append(Flight(flight_type = 'approach'))
-    for j in range(dep_num):
-        flights.append(Flight(flight_type = 'departure'))
-    return flights
+    def get_delay_time(self):
+        return(self.delay_time)
+    
+    def get_unit_loss(self):
+        return(self.unit_loss)
+
+    def calc_delay(self):
+        hours_e,minutes_e,seconds_e = self.estimated_time.split(':')
+        hours_a,minutes_a,seconds_a = self.actual_time.split(':')
+        a_secs = int(datetime.timedelta(hours = int(hours_a), minutes = int(minutes_a), seconds = int(seconds_a)).total_seconds())
+        e_secs = int(datetime.timedelta(hours = int(hours_e), minutes = int(minutes_e), seconds = int(seconds_e)).total_seconds())
+        self.delay_time = a_secs - e_secs
+        return(self.delay_time)
+
+    def is_delayed(self, delta_t):
+        if(delta_t < self.calc_delay()):
+            return True
+        else:
+            return False
+    
+    

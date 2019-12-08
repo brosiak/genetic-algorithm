@@ -27,23 +27,47 @@ class Flight:
         self.delay_losses = delay_losses
         self.delay_time = 0
     
-    def get_type(self):
-        return(self.flight_type)
+    # def get_type(self):
+    #     return(self.flight_type)
 
-    def get_runway(self):
-        return(self.runway)
+    # def get_runway(self):
+    #     return(self.runway)
 
-    def get_delay_time(self):
-        return(self.delay_time)
+    # def get_delay_time(self):
+    #     return(self.delay_time)
     
-    def get_unit_loss(self):
-        return(self.unit_loss)
+    def get_actual_time_s(self):
+        return self.hms_to_s(self.actual_time)
+    
+    # def get_unit_loss(self):
+    #     return(self.unit_loss)
+
+    # def get_actual_time(self):
+    #     return(self.actual_time)
+    
+    # def get_sequence_number(self):
+    #     return(self.sequence_number)
+
+    def hms_to_s(self, hms_time):
+        """changes time string in format hours:minutes:seconds to seconds
+        
+        Arguments:
+            hms_time {string} -- h:m:s 
+        
+        Returns:
+            int -- seconds
+        """
+        hours, minutes, seconds = hms_time.split(':')
+        secs = int(datetime.timedelta(hours = int(hours), minutes = int(minutes), seconds = int(seconds)).total_seconds())
+        return secs
+    
+    
 
     def calc_delay(self):
-        hours_e,minutes_e,seconds_e = self.estimated_time.split(':')
-        hours_a,minutes_a,seconds_a = self.actual_time.split(':')
-        a_secs = int(datetime.timedelta(hours = int(hours_a), minutes = int(minutes_a), seconds = int(seconds_a)).total_seconds())
-        e_secs = int(datetime.timedelta(hours = int(hours_e), minutes = int(minutes_e), seconds = int(seconds_e)).total_seconds())
+        """calculating delay of flight
+        """
+        a_secs = self.hms_to_s(self.actual_time)
+        e_secs = self.hms_to_s(self.estimated_time)
         self.delay_time = a_secs - e_secs
         return(self.delay_time)
 

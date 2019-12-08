@@ -128,16 +128,16 @@ class Genetic_algorithm:
     def single_crossover_mutation(self, ):
         if(self.mutation_probability < np.random.uniform(0.0, 1.0)):
             point = np.random.randint(0,len(self.population[0].flights))
-            randoms = random.sample((0,len(self.parents)), 2)
+            randoms = random.sample((0,len(self.parents)-1), 2)
             self.parents[randoms[0]].flights[point:], self.parents[randoms[1]].flights[point:] = \
                  self.parents[randoms[1]].flights[point:], self.parents[randoms[0]].flights[point:]
             flight_queue = self.parents[randoms[0]].get_queue()
             #flight_queue = flight_queue[0:point]
             while(len(self.parents[randoms[0]].get_queue()) != len(set(self.parents[randoms[0]].get_queue()))):
                 seen = []
-                for value in (flight_queue):
-                    if value not in seen:
-                        seen.append(value)
+                for value in (flight_queue[point:]):
+                    #if value not in seen:
+                   seen.append(value)
 
                 for i,value in enumerate(flight_queue[0:point]):
                     if value in seen:
@@ -145,9 +145,11 @@ class Genetic_algorithm:
                             second_point = np.random.randint(0,len(flight_queue))
                             sequence_number = self.parents[randoms[1]].flights[second_point].sequence_number
                             if(sequence_number not in seen):
-                                seen[i] = sequence_number
+                                #seen[i] = sequence_number\
+                                seen.append(sequence_number)
                                 self.parents[randoms[0]].flights[i], self.parents[randoms[1]].flights[second_point] = \
                                     self.parents[randoms[1]].flights[second_point], self.parents[randoms[0]].flights[i]
+                                break
                             else:
                                 continue
 

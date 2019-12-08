@@ -54,6 +54,13 @@ if __name__ == "__main__":
     genetic_algorithm.assign_rankings(objective_functions, genetic_algorithm.population)
     genetic_algorithm.population[0].calculate_fitness(k = k, N = population_size)
     print(genetic_algorithm.population[0].fitness)
+    genetic_algorithm.marriage(ro = 2)
+    for i in range(2):
+        print(genetic_algorithm.parents[i].get_queue())
+    genetic_algorithm.single_crossover_mutation()
+    print("\n\n")
+    for i in range(2):
+        print(genetic_algorithm.parents[i].get_queue())
     
             
   

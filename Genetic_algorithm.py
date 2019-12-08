@@ -128,30 +128,50 @@ class Genetic_algorithm:
     def single_crossover_mutation(self, ):
         if(self.mutation_probability < np.random.uniform(0.0, 1.0)):
             point = np.random.randint(0,len(self.population[0].flights))
+            print(point)
             randoms = random.sample((0,len(self.parents)-1), 2)
             self.parents[randoms[0]].flights[point:], self.parents[randoms[1]].flights[point:] = \
                  self.parents[randoms[1]].flights[point:], self.parents[randoms[0]].flights[point:]
             flight_queue = self.parents[randoms[0]].get_queue()
-            #flight_queue = flight_queue[0:point]
+            flight_queue2 = self.parents[randoms[1]].get_queue()
             while(len(self.parents[randoms[0]].get_queue()) != len(set(self.parents[randoms[0]].get_queue()))):
                 seen = []
-                for value in (flight_queue[point:]):
-                    #if value not in seen:
+                seen2 = []
+                indexes = []
+                indexes2 = []
+                for value, value2 in zip(flight_queue[point:], flight_queue2[point:]):
                    seen.append(value)
+                   seen2.append(value2)
+                for i, [value, value2] in enumerate(zip(flight_queue[0:point],flight_queue2[0:point])):
+                    if value in seen:
+                        indexes.append(i)
+                    if value2 in seen2:
+                        indexes2.append(i)
+                
 
                 for i,value in enumerate(flight_queue[0:point]):
                     if value in seen:
-                        while(value in seen):
-                            second_point = np.random.randint(0,len(flight_queue))
-                            sequence_number = self.parents[randoms[1]].flights[second_point].sequence_number
-                            if(sequence_number not in seen):
-                                #seen[i] = sequence_number\
-                                seen.append(sequence_number)
-                                self.parents[randoms[0]].flights[i], self.parents[randoms[1]].flights[second_point] = \
-                                    self.parents[randoms[1]].flights[second_point], self.parents[randoms[0]].flights[i]
-                                break
-                            else:
-                                continue
+                        #while(value in seen):
+                            #second_point = np.random.randint(0,len(flight_queue))
+                        second_point = random.choice(indexes)
+                        second_point2 = random.choice(indexes2)
+                        indexes.remove(second_point)
+                        indexes2.remove(second_point2)
+                        self.parents[randoms[0]].flights[second_point], self.parents[randoms[1]].flights[second_point2] = \
+                            self.parents[randoms[1]].flights[second_point2], self.parents[randoms[0]].flights[second_point]
+                                                        
+                            # sequence_number = self.parents[randoms[1]].flights[second_point].sequence_number
+                            # if(sequence_number not in seen):
+                            #     #seen[i] = sequence_number\
+                            #     seen.append(sequence_number)
+                            #     self.parents[randoms[0]].flights[i], self.parents[randoms[1]].flights[second_point] = \
+                            #         self.parents[randoms[1]].flights[second_point], self.parents[randoms[0]].flights[i]
+                            #     break
+                            # else:
+                            #     continue
+    
+    def selection(self,):
+        pass
 
     
 

@@ -172,6 +172,7 @@ class Genetic_algorithm:
             probabilities[i] = self.calc_selection_probability(population[i], population)
         return probabilities
 
+    
 
     def selection(self, population, lambda_parameter):
         probabilities = self.calc_selection_probability_population(population)
@@ -187,18 +188,15 @@ class Genetic_algorithm:
                     break
         return end_population
 
+    def mutation_swap(self, population):
+        indexes = random.sample(len(population), 2)
+        population[indexes[0]], population[indexes[1]] = population[indexes[1]], population[indexes[0]]
 
+    def mutation_shift(self, population):
+        point = random.sample(len(population), 1)
+        first_gene = random.sample(len(population), 1)
+        length = random.randint(1, len(population) // 6)
 
-    def sum_fitness_collection(self, collection):
-        f_sum = 0
-        for i in range(len(collection)):
-            f_sum += collection[i].fitness
-        return f_sum
-
-    def calc_selection_probability(self, individual, collection):
-        return(individual.fitness/self.sum_fitness_collection(collection))
-
-    
 
 
     def terminal_condition(self,):

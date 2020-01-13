@@ -63,11 +63,6 @@ if __name__ == "__main__":
     print("\n\n")
     for i in range(2):
         print(genetic_algorithm.parents[i].get_queue())
-<<<<<<< HEAD
     print(genetic_algorithm.calc_selection_probability(genetic_algorithm.population[0],genetic_algorithm.population))
-=======
-    print(genetic_algorithm.calc_selection_probability(genetic_algorithm.population[0], genetic_algorithm.population))
-    end_po
->>>>>>> 79ef62c93b6db94990170aaa232a98af16c7909a
             
   

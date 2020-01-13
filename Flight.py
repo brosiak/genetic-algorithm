@@ -39,6 +39,9 @@ class Flight:
     def get_actual_time_s(self):
         return self.hms_to_s(self.actual_time)
     
+    def get_estimated_time(self):
+        return self.hms_to_s(self.estimated_time)
+
     # def get_unit_loss(self):
     #     return(self.unit_loss)
 

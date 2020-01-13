@@ -122,56 +122,71 @@ class Genetic_algorithm:
         population[index].calc_runway_throughput()
         population[index].calc_robustness(self.delta_t)
 
-    def calc_fitness(self, index, population):
-        pass
+    def calc_fitness_population(self, population, k, N):
+        length = len(population)
+        for i in range(length):
+            population[i].calculate_fitness(k, N)
+        
 
-    def single_crossover_mutation(self, ):
+
+    def single_point_crossover(self, ):
         if(self.mutation_probability < np.random.uniform(0.0, 1.0)):
             point = np.random.randint(0,len(self.population[0].flights))
             print(point)
             randoms = random.sample((0,len(self.parents)-1), 2)
             self.parents[randoms[0]].flights[point:], self.parents[randoms[1]].flights[point:] = \
                  self.parents[randoms[1]].flights[point:], self.parents[randoms[0]].flights[point:]
-            flight_queue = self.parents[randoms[0]].get_queue()
-            flight_queue2 = self.parents[randoms[1]].get_queue()
+            flight_queue = [self.parents[randoms[i]].get_queue() for i in range(2)]
             while(len(self.parents[randoms[0]].get_queue()) != len(set(self.parents[randoms[0]].get_queue()))):
-                seen = []
-                seen2 = []
-                indexes = []
-                indexes2 = []
-                for value, value2 in zip(flight_queue[point:], flight_queue2[point:]):
-                   seen.append(value)
-                   seen2.append(value2)
-                for i, [value, value2] in enumerate(zip(flight_queue[0:point],flight_queue2[0:point])):
-                    if value in seen:
-                        indexes.append(i)
-                    if value2 in seen2:
-                        indexes2.append(i)
-                
+                seen = [[] for i in range(2)]
+                indexes = [[] for i in range(2)]
+                for value, value2 in zip(flight_queue[0][point:], flight_queue[1][point:]):
+                   seen[0].append(value)
+                   seen[1].append(value2)
+                for i, [value, value2] in enumerate(zip(flight_queue[0][0:point],flight_queue[1][0:point])):
+                    if value in seen[0]:
+                        indexes[0].append(i)
+                    if value2 in seen[1]:
+                        indexes[1].append(i)
+                for i,value in enumerate(flight_queue[0][0:point]):
+                    if value in seen[0]:
+                        second_point = [random.choice(indexes[i]) for i in range(2)]
+                        indexes[0].remove(second_point[0])
+                        indexes[1].remove(second_point[1])
+                        self.parents[randoms[0]].flights[second_point[0]], self.parents[randoms[1]].flights[second_point[1]] = \
+                            self.parents[randoms[1]].flights[second_point[1]], self.parents[randoms[0]].flights[second_point[0]]
 
-                for i,value in enumerate(flight_queue[0:point]):
-                    if value in seen:
-                        #while(value in seen):
-                            #second_point = np.random.randint(0,len(flight_queue))
-                        second_point = random.choice(indexes)
-                        second_point2 = random.choice(indexes2)
-                        indexes.remove(second_point)
-                        indexes2.remove(second_point2)
-                        self.parents[randoms[0]].flights[second_point], self.parents[randoms[1]].flights[second_point2] = \
-                            self.parents[randoms[1]].flights[second_point2], self.parents[randoms[0]].flights[second_point]
-                                                        
-                            # sequence_number = self.parents[randoms[1]].flights[second_point].sequence_number
-                            # if(sequence_number not in seen):
-                            #     #seen[i] = sequence_number\
-                            #     seen.append(sequence_number)
-                            #     self.parents[randoms[0]].flights[i], self.parents[randoms[1]].flights[second_point] = \
-                            #         self.parents[randoms[1]].flights[second_point], self.parents[randoms[0]].flights[i]
-                            #     break
-                            # else:
-                            #     continue
     
-    def selection(self,):
-        pass
+
+    def calc_population_fitness(self, population):
+        return(sum(individual.fitness for individual in population))
+
+
+    def calc_selection_probability(self, individual, population):
+        return(individual.fitness/self.calc_population_fitness(population))
+
+    def calc_selection_probability_population(self,population):
+        length = len(population)
+        probabilities = prepare(length)
+        for i in range(length):
+            probabilities[i] = self.calc_selection_probability(population[i], population)
+        return probabilities
+
+
+    def selection(self, population, lambda_parameter):
+        probabilities = self.calc_selection_probability_population(population)
+        #end_probabilities = [sum(probabilities[:i+1]) for i in range(len(probabilities))]
+        end_population = prepare(lambda_parameter)
+        length = len(population)
+        for i in range(lambda_parameter):
+            rand_number = np.random.uniform(0.0, 1.0)
+            for j in range(length):
+                if rand_number <= max(probabilities):
+                    index = probabilities.index(max(probabilities))
+                    end_population[i] = population[index]
+                    break
+        return end_population
+
 
 
     def sum_fitness_collection(self, collection):

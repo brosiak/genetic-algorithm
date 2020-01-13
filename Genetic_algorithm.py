@@ -173,6 +173,16 @@ class Genetic_algorithm:
     def selection(self,):
         pass
 
+
+    def sum_fitness_collection(self, collection):
+        f_sum = 0
+        for i in range(len(collection)):
+            f_sum += collection[i].fitness
+        return f_sum
+
+    def calc_selection_probability(self, individual, collection):
+        return(individual.fitness/self.sum_fitness_collection(collection))
+
     
 
 

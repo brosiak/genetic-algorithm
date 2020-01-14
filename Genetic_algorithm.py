@@ -1,6 +1,6 @@
 import Individual
 import random
-import copy
+from copy import copy
 import numpy as np
 from os import strerror
 import pandas as pd
@@ -188,14 +188,39 @@ class Genetic_algorithm:
                     break
         return end_population
 
-    def mutation_swap(self, population):
-        indexes = random.sample(len(population), 2)
-        population[indexes[0]], population[indexes[1]] = population[indexes[1]], population[indexes[0]]
+    def mutation_swap(self, individual):
+        indexes = random.sample(len(individual.flights), 2)
+        individual.flights[indexes[0]], individual.flights[indexes[1]] = individual.flights[indexes[1]], individual.flights[indexes[0]]
 
-    def mutation_shift(self, population):
-        point = random.sample(len(population), 1)
-        first_gene = random.sample(len(population), 1)
-        length = random.randint(1, len(population) // 6)
+    def mutation_shift(self, individual):
+        point = random.randint( 1, len(individual.flights))
+        length = random.randint(1, len(individual.flights) // 3)
+        first_gene = random.randint(1, len(individual.flights) - length)
+        point = 13
+        length = 3
+        first_gene = 8
+        print(point ,length, first_gene)
+        diff = point - (first_gene + length)
+        if diff == 0:
+            return
+        if point - length >= first_gene or point < first_gene:
+            if diff > 0:
+                copied = copy(individual.flights[first_gene+1 + length : first_gene+1 + length  + diff])
+                del individual.flights[first_gene + length + 1 : first_gene + length + diff + 1]
+                for i in reversed(copied):
+                    individual.flights.insert(first_gene, i)
+            elif diff < 0:
+                diff = abs(point - first_gene)
+                copied  = copy(individual.flights[point: point+length])
+                del individual.flights[point: point+length]
+                for i in reversed(copied):
+                    individual.flights.insert(point + length + 1, i)
+        else:
+            individual.flights[first_gene : first_gene + length], individual.flights[point-length : point] =\
+                 individual.flights[point-length : point], individual.flights[first_gene : first_gene + length]
+
+            
+
 
 
 

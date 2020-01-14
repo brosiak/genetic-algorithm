@@ -52,17 +52,21 @@ if __name__ == "__main__":
     genetic_algorithm.initialize_population(approach_name, departure_name)
     genetic_algorithm.call_all_objectives_population()
     genetic_algorithm.assign_rankings(objective_functions, genetic_algorithm.population)
-    genetic_algorithm.population[0].calculate_fitness(k = k, N = population_size)
-    genetic_algorithm.population[1].calculate_fitness(k = k, N = population_size)
-    genetic_algorithm.population[2].calculate_fitness(k = k, N = population_size)
-    print(genetic_algorithm.population[0].fitness)
     genetic_algorithm.marriage(ro = 2)
-    for i in range(2):
-        print(genetic_algorithm.parents[i].get_queue())
-    genetic_algorithm.single_point_crossover()
-    print("\n\n")
-    for i in range(2):
-        print(genetic_algorithm.parents[i].get_queue())
-    print(genetic_algorithm.calc_selection_probability(genetic_algorithm.population[0],genetic_algorithm.population))
+    print(genetic_algorithm.parents[0].get_queue())
+    genetic_algorithm.mutation_shift(genetic_algorithm.parents[0])
+    print(genetic_algorithm.parents[0].get_queue())
+    # genetic_algorithm.population[0].calculate_fitness(k = k, N = population_size)
+    # genetic_algorithm.population[1].calculate_fitness(k = k, N = population_size)
+    # genetic_algorithm.population[2].calculate_fitness(k = k, N = population_size)
+    # print(genetic_algorithm.population[0].fitness)
+    # genetic_algorithm.marriage(ro = 2)
+    # for i in range(2):
+    #     print(genetic_algorithm.parents[i].get_queue())
+    # genetic_algorithm.single_point_crossover()
+    # print("\n\n")
+    # for i in range(2):
+    #     print(genetic_algorithm.parents[i].get_queue())
+    # print(genetic_algorithm.calc_selection_probability(genetic_algorithm.population[0],genetic_algorithm.population))
             
   

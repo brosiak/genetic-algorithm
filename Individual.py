@@ -34,9 +34,36 @@ class Individual:
             flights[i] = num
         return flights
     
+    def get_queue_runways(self):
+        flights = self.flights.copy()
+        run_1 = []
+        run_2 = []
+        for number,flight in enumerate(flights):
+            if flight.runway == 0:
+                run_1.append(flights[number].sequence_number)
+            elif flight.runway == 1:
+                run_2.append(flights[number].sequence_number)
+        print('runway 1: '+str(run_1))
+        print('runway 2: '+str(run_2))
+
     
-            
-    
+    def get_times_runways(self):
+        flights = self.flights.copy()
+        run_1 = []
+        run_2 = []
+        for number,flight in enumerate(flights):
+            if flight.runway == 0:
+                run_1.append(number)
+            elif flight.runway == 1:
+                run_2.append(number)
+        print('runway 1:')
+        for r1 in run_1:
+            print('est time:' + str(flights[r1].s_to_hms(flights[r1].estimated_time))+' '+
+                'act time:' + str(flights[r1].s_to_hms(flights[r1].actual_time)))
+        print('runway 2:')
+        for r2 in run_2:
+            print('est time:' + str(flights[r2].s_to_hms(flights[r2].estimated_time))+' '+
+                'act time:' + str(flights[r2].s_to_hms(flights[r2].actual_time)))
 
     
 
@@ -47,7 +74,7 @@ class Individual:
         Returns:
             int -- runway throughput
         """
-        self.runway_throughput = self.flights[-1].get_actual_time_s() - self.flights[0].get_actual_time_s()
+        self.runway_throughput = max(flight.actual_time for flight in self.flights) - min(flight.actual_time for flight in self.flights)#self.flights[-1].get_actual_time_s() - self.flights[0].get_actual_time_s()
         return self.runway_throughput
 
     def calc_flight_losses(self, delta_t):

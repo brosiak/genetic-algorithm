@@ -6,12 +6,14 @@ from os import strerror
 import pandas as pd
 from scipy.stats import rankdata
 from collections import Counter 
+from numpy.random import choice
+
 class Genetic_algorithm:
 
     def __init__(self, approach_data = [], departure_data = [], \
          crossover_probability = 0, mutation_probability = 0, generation_gap = 0, \
              elimination_rate = 0, alfa = 0, population_size = 0, error = 0, k = 0, \
-                 vk_min = 0, vk_max = 0, delta_t = 0, runways = 0):
+                 vk_min = 0, vk_max = 0, delta_t = 0, runways = 0, time_interval = 0):
         self.approach_data = approach_data
         self.departure_data = departure_data
         self.crossover_probability = crossover_probability
@@ -30,6 +32,7 @@ class Genetic_algorithm:
         self.parents = []
         self.ranking = {}
         self.generation_number = 0
+        self.time_interval = 120
         
     
     def read_data(self, file_name):
@@ -48,7 +51,7 @@ class Genetic_algorithm:
         self.parents = prepare(ro)
         selected_individuals = np.random.permutation(len(self.population))
         for i in range(ro):
-            self.parents[i] = self.population[selected_individuals[i]]
+            self.parents[i] = copy(self.population[selected_individuals[i]])
         return self.parents
 
 
@@ -63,6 +66,9 @@ class Genetic_algorithm:
             a = individual.flights
             a = random.sample(a,len(a))
             individual.flights = a
+            for flight in individual.flights:
+                flight.estimated_time = flight.hms_to_s(flight.estimated_time)
+                flight.actual_time = flight.hms_to_s(flight.actual_time)
             self.population[i] = individual
     
     def initialize_parents(self, parents_size):
@@ -111,11 +117,11 @@ class Genetic_algorithm:
                 collection[i].individual_ranking[j] = ranking.get(j)[i]
 
 
-    def call_all_objectives_population(self,):
-        for i in range(self.population_size):
-            self.population[i].calc_flight_losses(self.delta_t)
-            self.population[i].calc_runway_throughput()
-            self.population[i].calc_robustness(self.delta_t)
+    def call_all_objectives_population(self, population):
+        for i in range(len(population)):
+            population[i].calc_flight_losses(self.delta_t)
+            population[i].calc_runway_throughput()
+            population[i].calc_robustness(self.delta_t)
 
     def call_all_objectives_individual(self, index, population):
         population[index].calc_flight_losses(self.delta_t)
@@ -132,8 +138,7 @@ class Genetic_algorithm:
     def single_point_crossover(self, ):
         if(self.mutation_probability < np.random.uniform(0.0, 1.0)):
             point = np.random.randint(0,len(self.population[0].flights))
-            print(point)
-            randoms = random.sample((0,len(self.parents)-1), 2)
+            randoms = random.sample([i for i in range(len(self.parents)-1)], 2)
             self.parents[randoms[0]].flights[point:], self.parents[randoms[1]].flights[point:] = \
                  self.parents[randoms[1]].flights[point:], self.parents[randoms[0]].flights[point:]
             flight_queue = [self.parents[randoms[i]].get_queue() for i in range(2)]
@@ -155,6 +160,9 @@ class Genetic_algorithm:
                         indexes[1].remove(second_point[1])
                         self.parents[randoms[0]].flights[second_point[0]], self.parents[randoms[1]].flights[second_point[1]] = \
                             self.parents[randoms[1]].flights[second_point[1]], self.parents[randoms[0]].flights[second_point[0]]
+            return self.parents[randoms[0]]
+        else:
+            return self.parents[randoms[0]]
 
     
 
@@ -187,19 +195,26 @@ class Genetic_algorithm:
                     end_population[i] = population[index]
                     break
         return end_population
+    
+    def roulette_selection(self, population, lambda_parameter):
+        probabilities = self.calc_selection_probability_population(population)
+        indexes = choice(len(population), lambda_parameter, p = probabilities)
+        #print(indexes)
+        return_pop = [copy(population[i]) for i in indexes]
+        for i in return_pop:
+            print (i.get_queue())
+        return return_pop
+
+
 
     def mutation_swap(self, individual):
-        indexes = random.sample(len(individual.flights), 2)
+        indexes = random.sample([i for i in range(len(individual.flights))], 2)
         individual.flights[indexes[0]], individual.flights[indexes[1]] = individual.flights[indexes[1]], individual.flights[indexes[0]]
 
     def mutation_shift(self, individual):
         point = random.randint( 1, len(individual.flights))
         length = random.randint(1, len(individual.flights) // 3)
         first_gene = random.randint(1, len(individual.flights) - length)
-        point = 13
-        length = 3
-        first_gene = 8
-        print(point ,length, first_gene)
         diff = point - (first_gene + length)
         if diff == 0:
             return
@@ -220,13 +235,26 @@ class Genetic_algorithm:
                  individual.flights[point-length : point], individual.flights[first_gene : first_gene + length]
 
             
+    def calc_actual_time(self, individual):
+        indexes = np.random.permutation(2)
+        for number,flight in enumerate(individual.flights[0:2]):
+            flight.actual_time = flight.estimated_time + self.time_interval
+            flight.runway = indexes[number]
+        for number, flight in enumerate(individual.flights[2:],2):
+            flight.runway = random.randrange(2)
+            runway = flight.runway
+            index = max(idx for idx, flight in enumerate(individual.flights[0:number]) if flight.runway == runway)
+            flight.actual_time = individual.flights[index].actual_time + self.time_interval
 
+    def calc_actual_time_population(self, population):
+        for individual in population:
+            self.calc_actual_time(individual)
 
 
 
     def terminal_condition(self,):
         result = False
-        if self.generation_number >= self.error:
+        if self.generation_number <= self.error:
             result = True
         return result
 

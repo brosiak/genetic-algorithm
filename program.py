@@ -11,14 +11,14 @@ departure_name = "departure_initial.txt"
 delta_t = 120
 runways = 2
 crossover_probability = 0.9
-mutation_probability = -0.1
+mutation_probability = 0.1
 generation_gap = 0.9
 elimination_rate = 0.2
 alfa = 0.2
 population_size = 10
-lambda_parameter = 100
+lambda_parameter = 50
 ro_parameter = 10
-error = 100
+error = 1500
 k = 1.5
 vk_min = 1
 vk_max = 30
@@ -38,11 +38,19 @@ if __name__ == "__main__":
     #     exit(exc.errno)
     # individual = Individual.Individual()
     # individual.init_all_flights(approach_data, departure_data)
+    # ga = Genetic_algorithm.Genetic_algorithm(crossover_probability = crossover_probability, mutation_probability = mutation_probability, \
+    #      generation_gap = generation_gap, elimination_rate = elimination_rate, alfa = alfa, population_size = population_size, \
+    #          error = error, k = k, vk_min = vk_min, vk_max = vk_max, delta_t = delta_t, runways = runways, time_interval = time_interval)
+    # for flight in individual.flights:
+    #     flight.estimated_time = flight.hms_to_s(flight.estimated_time)
+    #     flight.actual_time = flight.hms_to_s(flight.actual_time)
+    # ga.calc_actual_time(individual)
     # print(individual.calc_flight_losses(delta_t))
     # print(individual.calc_robustness(delta_t))    
     # print("robustness is ",round(individual.get_robustness_percentage(), 2),"%")
     # print(individual.calc_runway_throughput())
     # print(individual.get_queue())
+    # print(individual.get_queue_runways())
     # start = time.time()
     # population = Individual.initialize_population(population_size, approach_data, departure_data)
     # end = time.time()
@@ -58,21 +66,30 @@ if __name__ == "__main__":
     ga.assign_rankings(objective_functions, ga.population)
     ga.calc_fitness_population(ga.population, k, population_size)
     flight_losses = []
+    runway_through = []
+    robustness = []
+    
+    
+    print("starting algorithm")
+    start = time.time()
     while(ga.terminal_condition()):
         offspring = Genetic_algorithm.prepare(lambda_parameter)
         for i in range(lambda_parameter):
             ga.marriage(ro_parameter)
             test = ga.single_point_crossover()
-            offspring[i] = copy.copy(test)
+            offspring[i] = copy.deepcopy(test)
             ga.mutation_swap(offspring[i])
 
             #print(offspring[i].get_queue())
-        ga.calc_actual_time_population(offspring)
-        ga.call_all_objectives_population(offspring)
-        ga.assign_rankings(objective_functions, offspring)
-        ga.calc_fitness_population(offspring, k, lambda_parameter)
-        flight_losses.append(min(individual.flight_losses for individual in offspring))
-        ga.population = ga.roulette_selection(offspring, population_size)
+        ga.calc_actual_time_population(offspring+ga.population)
+        ga.call_all_objectives_population(offspring+ga.population)
+        ga.assign_rankings(objective_functions, offspring+ga.population)
+        ga.calc_fitness_population(offspring+ga.population, k, lambda_parameter)
+        # flight_losses.append(min(individual.flight_losses for individual in offspring))
+        # runway_through.append(min(individual.runway_throughput for individual in offspring))
+        # robustness.append(min(individual.robustness for individual in offspring))
+        #ga.population = ga.roulette_selection(offspring+ga.population, population_size)
+        ga.population = ga.flight_losses_selection(offspring+ga.population, population_size)
         ga.generation_number += 1
     for number, individual in enumerate(ga.population):
         print('\n')
@@ -82,7 +99,11 @@ if __name__ == "__main__":
         print('robustness: '+str(individual.robustness))
         print('flight losses: '+ str(individual.flight_losses))
         print('runway throughtput: ' + str(individual.runway_throughput))
-    print('minimal flight losses:' +str(min(flight_losses)))
+    # print('minimal flight losses:' +str(min(flight_losses)))
+    # print('minimal runway:' +str(min(runway_through)))
+    # print('minimal robustness:' +str(min(robustness)))
+    end = time.time()
+    print("execution time: ",end-start)
         #print(individual.get_times_runways())
     # ga.call_all_objectives_population()
     # ga.assign_rankings(objective_functions, ga.population)

@@ -162,7 +162,7 @@ class Genetic_algorithm:
                             self.parents[randoms[1]].flights[second_point[1]], self.parents[randoms[0]].flights[second_point[0]]
             return self.parents[randoms[0]]
         else:
-            return self.parents[randoms[0]]
+            return self.parents[random.randint(0,len(self.parents)-1)]
 
     
 
@@ -199,12 +199,13 @@ class Genetic_algorithm:
     def roulette_selection(self, population, lambda_parameter):
         probabilities = self.calc_selection_probability_population(population)
         indexes = choice(len(population), lambda_parameter, p = probabilities)
-        #print(indexes)
         return_pop = [copy(population[i]) for i in indexes]
-        for i in return_pop:
-            print (i.get_queue())
         return return_pop
 
+    def flight_losses_selection(self, population, lambda_parameter):
+        return_pop = sorted(population, key = lambda x: x.flight_losses, reverse = False)
+        return_pop = return_pop[0:lambda_parameter]
+        return return_pop
 
 
     def mutation_swap(self, individual):
@@ -238,7 +239,7 @@ class Genetic_algorithm:
     def calc_actual_time(self, individual):
         indexes = np.random.permutation(2)
         for number,flight in enumerate(individual.flights[0:2]):
-            flight.actual_time = flight.estimated_time + self.time_interval
+            flight.actual_time = flight.estimated_time# + self.time_interval
             flight.runway = indexes[number]
         for number, flight in enumerate(individual.flights[2:],2):
             flight.runway = random.randrange(2)
@@ -258,6 +259,11 @@ class Genetic_algorithm:
             result = True
         return result
 
+    def do_calcs(self, population, lambda_parameter, k, objective_functions):
+        self.calc_actual_time_population(population)
+        self.call_all_objectives_population(population)
+        self.assign_rankings(objective_functions, population)
+        self.calc_fitness_population(population, k, lambda_parameter)
                         
                 
 

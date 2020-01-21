@@ -10,16 +10,16 @@ approach_name = "approach_initial.txt"
 departure_name = "departure_initial.txt"
 delta_t = 120
 runways = 2
-crossover_probability = 0.9
-mutation_probability = 0.1
+crossover_probability = 0.5
+mutation_probability = 0.8
 generation_gap = 0.9
 elimination_rate = 0.2
 alfa = 0.2
 population_size = 10
 lambda_parameter = 50
 ro_parameter = 10
-error = 1500
-k = 1.5
+error = 200
+k = 2
 vk_min = 1
 vk_max = 30
 time_interval = 120
@@ -81,10 +81,11 @@ if __name__ == "__main__":
             ga.mutation_swap(offspring[i])
 
             #print(offspring[i].get_queue())
-        ga.calc_actual_time_population(offspring+ga.population)
-        ga.call_all_objectives_population(offspring+ga.population)
-        ga.assign_rankings(objective_functions, offspring+ga.population)
-        ga.calc_fitness_population(offspring+ga.population, k, lambda_parameter)
+        ga.do_calcs(ga.population+offspring, lambda_parameter, k, objective_functions)
+        # ga.calc_actual_time_population(offspring+ga.population)
+        # ga.call_all_objectives_population(offspring+ga.population)
+        # ga.assign_rankings(objective_functions, offspring+ga.population)
+        # ga.calc_fitness_population(offspring+ga.population, k, lambda_parameter)
         # flight_losses.append(min(individual.flight_losses for individual in offspring))
         # runway_through.append(min(individual.runway_throughput for individual in offspring))
         # robustness.append(min(individual.robustness for individual in offspring))

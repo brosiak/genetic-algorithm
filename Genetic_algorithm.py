@@ -189,7 +189,7 @@ class Genetic_algorithm:
         length = len(population)
         for i in range(lambda_parameter):
             rand_number = np.random.uniform(0.0, 1.0)
-            for j in range(length):
+            for _ in range(length):
                 if rand_number <= max(probabilities):
                     index = probabilities.index(max(probabilities))
                     end_population[i] = population[index]
@@ -212,30 +212,89 @@ class Genetic_algorithm:
         indexes = random.sample([i for i in range(len(individual.flights))], 2)
         individual.flights[indexes[0]], individual.flights[indexes[1]] = individual.flights[indexes[1]], individual.flights[indexes[0]]
 
+    # def mutation_shift(self, individual):
+    #     max_range = len(individual.flights)
+    #     point = random.randint( 1, max_range - 1)
+    #     length = random.randint(1, max_range - point+1)
+    #     first_gene = random.randint(1, max_range - length+1)
+    #     diff = point - (first_gene + length)
+    #     if diff == 0:
+    #         return
+    #     if point - length >= first_gene or point < first_gene:
+    #         if diff > 0:
+    #             copied = copy(individual.flights[first_gene+1 + length : first_gene+1 + length  + diff])
+    #             del individual.flights[first_gene + length + 1 : first_gene + length + diff + 1]
+    #             for i in reversed(copied):
+    #                 individual.flights.insert(first_gene, i)
+    #         elif diff < 0:
+    #             diff = abs(point - first_gene)
+    #             copied  = copy(individual.flights[point: point+length])
+    #             del individual.flights[point: point+length]
+    #             for i in reversed(copied):
+    #                 individual.flights.insert(point + length + 1, i)
+    #     else:
+    #         individual.flights[first_gene : first_gene + length], individual.flights[point-length : point] =\
+    #              individual.flights[point-length : point], individual.flights[first_gene : first_gene + length]
+    
     def mutation_shift(self, individual):
-        point = random.randint( 1, len(individual.flights))
-        length = random.randint(1, len(individual.flights) // 3)
-        first_gene = random.randint(1, len(individual.flights) - length)
-        diff = point - (first_gene + length)
-        if diff == 0:
+        max_range = len(individual.flights)
+        point = random.randint( 0, max_range - 1)
+        length = random.randint(1, max_range - point+1)
+        first_gene = random.randint(0, max_range - length+1)
+        if point == first_gene:
             return
-        if point - length >= first_gene or point < first_gene:
-            if diff > 0:
-                copied = copy(individual.flights[first_gene+1 + length : first_gene+1 + length  + diff])
-                del individual.flights[first_gene + length + 1 : first_gene + length + diff + 1]
-                for i in reversed(copied):
-                    individual.flights.insert(first_gene, i)
-            elif diff < 0:
-                diff = abs(point - first_gene)
-                copied  = copy(individual.flights[point: point+length])
-                del individual.flights[point: point+length]
-                for i in reversed(copied):
-                    individual.flights.insert(point + length + 1, i)
-        else:
-            individual.flights[first_gene : first_gene + length], individual.flights[point-length : point] =\
-                 individual.flights[point-length : point], individual.flights[first_gene : first_gene + length]
+        if point >= first_gene + length:
+            diff = point - (first_gene + length) +1
+            copied = copy(individual.flights[first_gene+length : first_gene+length+diff])
+            del individual.flights[first_gene+length : first_gene+length+diff]
+            for flight in reversed(copied):
+                individual.flights.insert(first_gene, flight)
+        elif point < first_gene:
+            diff = abs(first_gene - point)
+            copied = copy(individual.flights[point : point + diff])
+            del individual.flights[point : point + diff]
+            for flight in reversed(copied):
+                individual.flights.insert(first_gene + point, flight)
+       
 
-            
+    def mutation_scramble(self, individual):
+        max_range = len(individual.flights)
+        point = random.randrange( 1, max_range-1)
+        #print(point)
+        length = random.randrange(1, max_range - point+1)
+        #print("end)")
+        individual.flights[point:point+length] = random.sample(copy(individual.flights[point:point+length]), length)
+
+    def mutation_inversion(self, individual):
+        max_range = len(individual.flights)
+        point = random.randint( 1, max_range-1)
+        length = random.randint(1, max_range - point+1)
+        individual.flights[point:point+length] = reversed(individual.flights[point:point+length])
+
+    def calc_actual_time_v2(self, individual):
+        for number, flight in enumerate(individual.flights):
+            flight.runway = random.randrange(2)
+        flag1 = False
+        flag2 = False
+        for i in individual.flights:
+            if i.runway == 0 and flag1 == False:
+                i.actual_time = i.estimated_time + self.time_interval
+                flag1 = True
+            elif i.runway == 1 and flag2 == False:
+                i.actual_time = i.estimated_time + self.time_interval
+                flag2 = True
+            if flag1 and flag2:
+                break
+        for number, flight in enumerate(individual.flights):
+            runway = flight.runway
+            lst = [idx for idx, flight in enumerate(individual.flights[0:number]) if flight.runway == runway]
+            if len(lst)>0:
+                index = max(lst)
+                flight.actual_time = individual.flights[index].actual_time + self.time_interval
+            else:
+                flight.actual_time = flight.estimated_time# + self.time_interval
+
+
     def calc_actual_time(self, individual):
         indexes = np.random.permutation(2)
         for number,flight in enumerate(individual.flights[0:2]):

@@ -15,10 +15,11 @@ class Individual:
         self.flight_losses_ranking = 0
         self.robustness_ranking = 0
         self.individual_ranking = {}
+        self.relation_dictionary = {}
 
-    def init_all_flights(self, approach_data, departure_data):
-        self.departure_flights = init_flights(departure_data, 'departure')
-        self.approach_flights = init_flights(approach_data, 'approach')
+    def init_all_flights(self, approach_data, departure_data, relation_data):
+        self.departure_flights = init_flights(departure_data, relation_data, 'departure')
+        self.approach_flights = init_flights(approach_data, relation_data, 'approach')
         self.flights = self.approach_flights + self.departure_flights
     
     # def set_flights(self, flights):
@@ -34,11 +35,41 @@ class Individual:
             flights[i] = num
         return flights
     
-    
-            
-    
+    def get_queue_runways(self):
+        flights = self.flights.copy()
+        run_1 = []
+        run_2 = []
+        for number,flight in enumerate(flights):
+            if flight.runway == 0:
+                run_1.append(flights[number].sequence_number)
+            elif flight.runway == 1:
+                run_2.append(flights[number].sequence_number)
+        print('runway 1: '+str(run_1))
+        print('runway 2: '+str(run_2))
 
     
+    def get_times_runways(self):
+        flights = self.flights.copy()
+        run_1 = []
+        run_2 = []
+        for number,flight in enumerate(flights):
+            if flight.runway == 0:
+                run_1.append(number)
+            elif flight.runway == 1:
+                run_2.append(number)
+        print('runway 1:')
+        for r1 in run_1:
+            print('est time:' + str(flights[r1].s_to_hms(flights[r1].estimated_time))+' '+
+                'act time:' + str(flights[r1].s_to_hms(flights[r1].actual_time)))
+        print('runway 2:')
+        for r2 in run_2:
+            print('est time:' + str(flights[r2].s_to_hms(flights[r2].estimated_time))+' '+
+                'act time:' + str(flights[r2].s_to_hms(flights[r2].actual_time)))
+
+    def get_times_queue(self,):
+        for flight in self.flights:
+            print('est time:' + str(flight.s_to_hms(flight.estimated_time))+' '+
+                'act time:' + str(flight.s_to_hms(flight.actual_time))+' '+flight.flight_type+' '+str(flight.sequence_number))
 
 
     def calc_runway_throughput(self):
@@ -47,7 +78,7 @@ class Individual:
         Returns:
             int -- runway throughput
         """
-        self.runway_throughput = self.flights[-1].get_actual_time_s() - self.flights[0].get_actual_time_s()
+        self.runway_throughput = max(flight.actual_time for flight in self.flights) - min(flight.actual_time for flight in self.flights)#self.flights[-1].get_actual_time_s() - self.flights[0].get_actual_time_s()
         return self.runway_throughput
 
     def calc_flight_losses(self, delta_t):
@@ -117,10 +148,17 @@ class Individual:
     def get_robustness_percentage(self):
         return ((self.robustness / len(self.flights)) *100)
 
-def init_flights(data, flight_type):
+def init_flights(data, relation_data, flight_type):
     flights = []
     for i in range(len(data.index)):
         try:
+            columns = relation_data.columns[1:]
+            counter = 0
+            dictionary={}
+            for col in columns:
+                if relation_data[col][i]=='X':
+                    continue
+                dictionary[col] = relation_data[col][i]
             flight = Flight.Flight(
                 flight_type = flight_type,
                 airline = data['Airline'][i],
@@ -131,7 +169,8 @@ def init_flights(data, flight_type):
                 estimated_time = data['Estimated time'][i],
                 actual_time = data['Actual time'][i],
                 runway = data['Runway'][i],
-                delay_losses = data['Delay Losses'][i])
+                delay_losses = data['Delay Losses'][i],
+                relation = dictionary)
         except KeyError as exc:
             print("Error occured, there is no column named ", str(exc))
             exit()

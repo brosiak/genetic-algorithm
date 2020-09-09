@@ -1,6 +1,7 @@
 import datetime
+import time
 class Flight:
-    def __init__(self, flight_type = '', airline = '', sequence_number = 0, flight_number = '', airplane_type = '', unit_loss = 0, estimated_time = 0, actual_time = 0, runway = -1, delay_losses = -1 ):
+    def __init__(self, flight_type = '', airline = '', sequence_number = 0, flight_number = '', airplane_type = '', unit_loss = 0, estimated_time = 0, actual_time = 0, runway = -1, delay_losses = -1, relation = {} ):
         """Intialization of flight
         
         Keyword Arguments:
@@ -26,6 +27,7 @@ class Flight:
         self.runway = runway
         self.delay_losses = delay_losses
         self.delay_time = 0
+        self.relation = relation
     
     # def get_type(self):
     #     return(self.flight_type)
@@ -36,9 +38,18 @@ class Flight:
     # def get_delay_time(self):
     #     return(self.delay_time)
     
-    def get_actual_time_s(self):
-        return self.hms_to_s(self.actual_time)
+    # def get_actual_time_s(self):
+    #     return self.hms_to_s(self.actual_time)
     
+    # def get_estimated_time(self):
+    #     return self.hms_to_s(self.estimated_time)
+
+    def get_actual_time_s(self):
+        return self.actual_time
+    
+    def get_estimated_time(self):
+        return self.estimated_time
+
     # def get_unit_loss(self):
     #     return(self.unit_loss)
 
@@ -61,14 +72,21 @@ class Flight:
         secs = int(datetime.timedelta(hours = int(hours), minutes = int(minutes), seconds = int(seconds)).total_seconds())
         return secs
     
-    
+    def s_to_hms(self, secs):
+        return(time.strftime('%H:%M:%S', time.gmtime(secs)))
+
+    # def calc_delay(self):
+    #     """calculating delay of flight
+    #     """
+    #     a_secs = self.hms_to_s(self.actual_time)
+    #     e_secs = self.hms_to_s(self.estimated_time)
+    #     self.delay_time = a_secs - e_secs
+    #     return(self.delay_time)
 
     def calc_delay(self):
         """calculating delay of flight
         """
-        a_secs = self.hms_to_s(self.actual_time)
-        e_secs = self.hms_to_s(self.estimated_time)
-        self.delay_time = a_secs - e_secs
+        self.delay_time = self.actual_time - self.estimated_time
         return(self.delay_time)
 
     def is_delayed(self, delta_t):

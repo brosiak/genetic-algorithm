@@ -1,0 +1,7 @@
+Airline	Sequence number	Flight number	Type	Unit time delay loss	Estimated time	Actual time	Runway	Delay Losses
+829	1	LH1616	M	23.2	22:35:0	22:28:0	1	0
+833	2	W61516	M	29	22:30:0	22:25:0	0	0
+833	3	LH1352	M	29	22:49:0	22:48:0	0	239.4
+833	4	W61584	M	29	22:39:0	22:35:0	0	528
+833	5	W61476	M	29	22:43:0	22:38:0	1	1056
+828	6	SN2559	M	26.7	22:40:0	22:42:0	1	370.3

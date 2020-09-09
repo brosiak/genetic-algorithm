@@ -10,12 +10,13 @@ from numpy.random import choice
 
 class Genetic_algorithm:
 
-    def __init__(self, approach_data = [], departure_data = [], \
+    def __init__(self, approach_data = [], departure_data = [], relation_data = [], \
          crossover_probability = 0, mutation_probability = 0, generation_gap = 0, \
              elimination_rate = 0, alfa = 0, population_size = 0, error = 0, k = 0, \
                  vk_min = 0, vk_max = 0, delta_t = 0, runways = 0, time_interval = 0):
         self.approach_data = approach_data
         self.departure_data = departure_data
+        self.relation_data = relation_data
         self.crossover_probability = crossover_probability
         self.mutation_probability = mutation_probability
         self.generation_gap = generation_gap
@@ -33,6 +34,7 @@ class Genetic_algorithm:
         self.ranking = {}
         self.generation_number = 0
         self.time_interval = 120
+        self.minimal_actual = 0
         
     
     def read_data(self, file_name):
@@ -43,9 +45,10 @@ class Genetic_algorithm:
             exit(exc.errno)
         return data
 
-    def assign_initial_data(self, approach_name, departure_name):
+    def assign_initial_data(self, approach_name, departure_name, relation_name):
         self.approach_data  = self.read_data(approach_name)
         self.departure_data = self.read_data(departure_name)
+        self.relation_data = self.read_data(relation_name)
 
     def marriage(self, ro):
         self.parents = prepare(ro)
@@ -56,13 +59,14 @@ class Genetic_algorithm:
 
 
 
-    def initialize_population(self,approach_name, departure_name):
+    def initialize_population(self,approach_name, departure_name, relation_name):
         self.approach_data = self.read_data(approach_name)
         self.departure_data = self.read_data(departure_name)
+        self.relation_data = self.read_data(relation_name)
         self.population = prepare(self.population_size)
         for i in range(self.population_size):
             individual = Individual.Individual()
-            individual.init_all_flights(self.approach_data, self.departure_data)
+            individual.init_all_flights(self.approach_data, self.departure_data, self.relation_data)
             a = individual.flights
             a = random.sample(a,len(a))
             individual.flights = a
@@ -70,6 +74,7 @@ class Genetic_algorithm:
                 flight.estimated_time = flight.hms_to_s(flight.estimated_time)
                 flight.actual_time = flight.hms_to_s(flight.actual_time)
             self.population[i] = individual
+        self.minimal_actual = min([x.actual_time for x in self.population[0].flights])
     
     def initialize_parents(self, parents_size):
         self.parents = prepare(parents_size)
@@ -136,9 +141,9 @@ class Genetic_algorithm:
 
 
     def single_point_crossover(self, ):
-        if(self.mutation_probability < np.random.uniform(0.0, 1.0)):
+        if(self.crossover_probability > np.random.uniform(0.0, 1.0)):
             point = np.random.randint(0,len(self.population[0].flights))
-            randoms = random.sample([i for i in range(len(self.parents)-1)], 2)
+            randoms = random.sample([i for i in range(len(self.parents))], 2)
             self.parents[randoms[0]].flights[point:], self.parents[randoms[1]].flights[point:] = \
                  self.parents[randoms[1]].flights[point:], self.parents[randoms[0]].flights[point:]
             flight_queue = [self.parents[randoms[i]].get_queue() for i in range(2)]
@@ -164,7 +169,24 @@ class Genetic_algorithm:
         else:
             return self.parents[random.randint(0,len(self.parents)-1)]
 
-    
+    # def single_point_crossover(self, ):
+    #     if(self.mutation_probability < np.random.uniform(0.0, 1.0)):
+    #         point = np.random.randint(0,len(self.population[0].flights))
+    #         randoms = random.sample([i for i in range(len(self.parents))], 2)
+    #         self.parents[randoms[0]].flights[point:], self.parents[randoms[1]].flights[point:] = \
+    #              self.parents[randoms[1]].flights[point:], self.parents[randoms[0]].flights[point:]
+    #         flight_queue = [self.parents[randoms[i]].get_queue() for i in range(2)]
+    #         for i, [value, value2] in enumerate(zip(flight_queue[0][point:], flight_queue[1][point:])):
+    #             index1 = flight_queue[0].index(value)
+    #             index2 = flight_queue[1].index(value2)
+    #             if index1<point:
+    #                 self.parents[randoms[0]].flights[index1] = copy(self.parents[randoms[1]].flights[i+point])
+    #             if index2<point:
+    #                 self.parents[randoms[1]].flights[index2] = copy(self.parents[randoms[0]].flights[i+point])
+    #         return self.parents[randoms[random.randint(0,1)]]
+    #     else:
+    #         return self.parents[random.randint(0,len(self.parents)-1)]
+
 
     def calc_population_fitness(self, population):
         return(sum(individual.fitness for individual in population))
@@ -184,7 +206,6 @@ class Genetic_algorithm:
 
     def selection(self, population, lambda_parameter):
         probabilities = self.calc_selection_probability_population(population)
-        #end_probabilities = [sum(probabilities[:i+1]) for i in range(len(probabilities))]
         end_population = prepare(lambda_parameter)
         length = len(population)
         for i in range(lambda_parameter):
@@ -209,67 +230,46 @@ class Genetic_algorithm:
 
 
     def mutation_swap(self, individual):
-        indexes = random.sample([i for i in range(len(individual.flights))], 2)
-        individual.flights[indexes[0]], individual.flights[indexes[1]] = individual.flights[indexes[1]], individual.flights[indexes[0]]
+        if(self.mutation_probability > np.random.uniform(0.0, 1.0)):
+            indexes = random.sample([i for i in range(len(individual.flights))], 2)
+            individual.flights[indexes[0]], individual.flights[indexes[1]] = individual.flights[indexes[1]], individual.flights[indexes[0]]
 
-    # def mutation_shift(self, individual):
-    #     max_range = len(individual.flights)
-    #     point = random.randint( 1, max_range - 1)
-    #     length = random.randint(1, max_range - point+1)
-    #     first_gene = random.randint(1, max_range - length+1)
-    #     diff = point - (first_gene + length)
-    #     if diff == 0:
-    #         return
-    #     if point - length >= first_gene or point < first_gene:
-    #         if diff > 0:
-    #             copied = copy(individual.flights[first_gene+1 + length : first_gene+1 + length  + diff])
-    #             del individual.flights[first_gene + length + 1 : first_gene + length + diff + 1]
-    #             for i in reversed(copied):
-    #                 individual.flights.insert(first_gene, i)
-    #         elif diff < 0:
-    #             diff = abs(point - first_gene)
-    #             copied  = copy(individual.flights[point: point+length])
-    #             del individual.flights[point: point+length]
-    #             for i in reversed(copied):
-    #                 individual.flights.insert(point + length + 1, i)
-    #     else:
-    #         individual.flights[first_gene : first_gene + length], individual.flights[point-length : point] =\
-    #              individual.flights[point-length : point], individual.flights[first_gene : first_gene + length]
     
     def mutation_shift(self, individual):
-        max_range = len(individual.flights)
-        point = random.randint( 0, max_range - 1)
-        length = random.randint(1, max_range - point+1)
-        first_gene = random.randint(0, max_range - length+1)
-        if point == first_gene:
-            return
-        if point >= first_gene + length:
-            diff = point - (first_gene + length) +1
-            copied = copy(individual.flights[first_gene+length : first_gene+length+diff])
-            del individual.flights[first_gene+length : first_gene+length+diff]
-            for flight in reversed(copied):
-                individual.flights.insert(first_gene, flight)
-        elif point < first_gene:
-            diff = abs(first_gene - point)
-            copied = copy(individual.flights[point : point + diff])
-            del individual.flights[point : point + diff]
-            for flight in reversed(copied):
-                individual.flights.insert(first_gene + point, flight)
+        if(self.mutation_probability > np.random.uniform(0.0, 1.0)):
+            max_range = len(individual.flights)
+            point = random.randint( 0, max_range - 1)
+            length = random.randint(1, max_range - point+1)
+            first_gene = random.randint(0, max_range - length+1)
+            if point == first_gene:
+                return
+            if point >= first_gene + length:
+                diff = point - (first_gene + length) +1
+                copied = copy(individual.flights[first_gene+length : first_gene+length+diff])
+                del individual.flights[first_gene+length : first_gene+length+diff]
+                for flight in reversed(copied):
+                    individual.flights.insert(first_gene, flight)
+            elif point < first_gene:
+                diff = abs(first_gene - point)
+                copied = copy(individual.flights[point : point + diff])
+                del individual.flights[point : point + diff]
+                for flight in reversed(copied):
+                    individual.flights.insert(first_gene + point, flight)
        
 
     def mutation_scramble(self, individual):
-        max_range = len(individual.flights)
-        point = random.randrange( 1, max_range-1)
-        #print(point)
-        length = random.randrange(1, max_range - point+1)
-        #print("end)")
-        individual.flights[point:point+length] = random.sample(copy(individual.flights[point:point+length]), length)
+        if(self.mutation_probability > np.random.uniform(0.0, 1.0)):
+            max_range = len(individual.flights)
+            point = random.randrange( 1, max_range-1)
+            length = random.randrange(1, max_range - point+1)
+            individual.flights[point:point+length] = random.sample(copy(individual.flights[point:point+length]), length)
 
     def mutation_inversion(self, individual):
-        max_range = len(individual.flights)
-        point = random.randint( 1, max_range-1)
-        length = random.randint(1, max_range - point+1)
-        individual.flights[point:point+length] = reversed(individual.flights[point:point+length])
+        if(self.mutation_probability > np.random.uniform(0.0, 1.0)):
+            max_range = len(individual.flights)
+            point = random.randint( 1, max_range-1)
+            length = random.randint(1, max_range - point+1)
+            individual.flights[point:point+length] = reversed(individual.flights[point:point+length])
 
     def calc_actual_time_v2(self, individual):
         for number, flight in enumerate(individual.flights):
@@ -294,6 +294,46 @@ class Genetic_algorithm:
             else:
                 flight.actual_time = flight.estimated_time# + self.time_interval
 
+    def calc_actual_time_with_relation(self, individual):
+        length = len(individual.flights)
+        for number, flight in enumerate(individual.flights):
+            flight.runway = random.randrange(2)
+            runway = flight.runway
+            if number == 0:
+                flight.actual_time = flight.estimated_time - 60*7
+            elif number > 0:
+                flight_compare = individual.flights[number-1]
+                if flight_compare.flight_type == 'departure' and flight.flight_type =='departure':
+                    if int(flight_compare.relation.get(flight.flight_number))==1:
+                        time = 60
+                        flight.actual_time = flight_compare.actual_time + time
+                    elif int(flight_compare.relation.get(flight.flight_number))==0:
+                        if flight_compare.airline - flight.airline >= 75:
+                            time = 120
+                        else:
+                            time = 300
+                        flight.actual_time = flight_compare.actual_time + time
+                elif flight_compare.flight_type == 'approach' and flight.flight_type =='approach':
+                    time = 120
+                    flight.actual_time = flight_compare.actual_time + time
+                elif (flight_compare.flight_type == 'approach' and flight.flight_type =='departure'):
+                    if flight_compare.runway == flight.runway:
+                        time = 180
+                        flight.actual_time = flight_compare.actual_time + time
+                    else:
+                        time = 120
+                        flight.actual_time = flight_compare.actual_time + time
+                elif (flight_compare.flight_type == 'departure' and flight.flight_type =='approach'):
+                    if int(flight_compare.relation.get(flight.flight_number))==1:
+                        time = 180
+                        flight.actual_time = flight_compare.actual_time + time
+                    elif int(flight_compare.relation.get(flight.flight_number))==0:
+                        time = 300
+                        flight.actual_time = flight_compare.actual_time + time
+                        
+
+
+
 
     def calc_actual_time(self, individual):
         indexes = np.random.permutation(2)
@@ -308,7 +348,7 @@ class Genetic_algorithm:
 
     def calc_actual_time_population(self, population):
         for individual in population:
-            self.calc_actual_time(individual)
+            self.calc_actual_time_with_relation(individual)
 
 
 

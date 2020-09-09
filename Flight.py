@@ -1,7 +1,7 @@
 import datetime
 import time
 class Flight:
-    def __init__(self, flight_type = '', airline = '', sequence_number = 0, flight_number = '', airplane_type = '', unit_loss = 0, estimated_time = 0, actual_time = 0, runway = -1, delay_losses = -1 ):
+    def __init__(self, flight_type = '', airline = '', sequence_number = 0, flight_number = '', airplane_type = '', unit_loss = 0, estimated_time = 0, actual_time = 0, runway = -1, delay_losses = -1, relation = {} ):
         """Intialization of flight
         
         Keyword Arguments:
@@ -27,6 +27,7 @@ class Flight:
         self.runway = runway
         self.delay_losses = delay_losses
         self.delay_time = 0
+        self.relation = relation
     
     # def get_type(self):
     #     return(self.flight_type)
